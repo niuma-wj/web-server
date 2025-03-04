@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.GameMahjongMapper">
+    <select id="hasNumber" resultType="Integer">
+        select count(*) from `game_mahjong` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getIdByNumber" resultType="String">
+        select `t1`.`venue_id` from `game_mahjong` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getNumber" resultType="String">
+        select `number` from `game_mahjong` where `venue_id` = #{venueId}
+    </select>
+
+    <select id="countRecord" resultType="Integer">
+        select count(*) from `game_mahjong_record` where
+        `player_id0` = #{playerId} or `player_id1` = #{playerId} or `player_id2` = #{playerId} or `player_id3` = #{playerId}
+    </select>
+
+    <resultMap id="MahjongRecordMap" type="com.niuma.admin.entity.MahjongRecord">
+        <id column="id" property="id" />
+        <result column="venue_id" property="venueId" />
+        <result column="round_no" property="roundNo" />
+        <result column="player_id0" property="playerId0" />
+        <result column="player_id1" property="playerId1" />
+        <result column="player_id2" property="playerId2" />
+        <result column="player_id3" property="playerId3" />
+        <result column="banker" property="banker" />
+        <result column="score0" property="score0" />
+        <result column="score1" property="score1" />
+        <result column="score2" property="score2" />
+        <result column="score3" property="score3" />
+        <result column="win_gold0" property="winGold0" />
+        <result column="win_gold1" property="winGold1" />
+        <result column="win_gold2" property="winGold2" />
+        <result column="win_gold3" property="winGold3" />
+        <result column="time" property="time" />
+    </resultMap>
+    <select id="getRecords" resultMap="MahjongRecordMap">
+        select `id`, `venue_id`, `round_no`, `player_id0`, `player_id1`, `player_id2`, `player_id3`, `banker`,
+            `score0`, `score1`, `score2`, `score3`, `win_gold0`, `win_gold1`, `win_gold2`, `win_gold3`, `time`
+        from `game_mahjong_record`
+        where `player_id0` = #{playerId} or `player_id1` = #{playerId} or `player_id2` = #{playerId} or `player_id3` = #{playerId}
+        order by `id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="getRecord" resultMap="MahjongRecordMap">
+        select `id`, `venue_id`, `round_no`, `player_id0`, `player_id1`, `player_id2`, `player_id3`, `banker`,
+            `score0`, `score1`, `score2`, `score3`, `win_gold0`, `win_gold1`, `win_gold2`, `win_gold3`, `time`
+        from `game_mahjong_record`
+        where `id` = #{id}
+    </select>
+
+    <select id="getPlayback" resultType="String">
+        select `playback` from `game_mahjong_record` where `id` = #{id}
+    </select>
+
+    <sql id="mahjong_room_condition">
+        <if test="venueId != null">
+            and `t1`.`venue_id` like #{venueId}
+        </if>
+        <if test="ownerId != null">
+            and `t2`.`owner_id` like #{ownerId}
+        </if>
+        <if test="number != null">
+            and `t1`.`number` like #{number}
+        </if>
+        <if test="startTime != null">
+            and `t2`.`create_time` <![CDATA[>]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and `t2`.`create_time` <![CDATA[<]]> #{endTime}
+        </if>
+    </sql>
+    <select id="countRoom" resultType="Integer">
+        select count(*) from `game_mahjong` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="mahjong_room_condition"/>
+        </where>
+    </select>
+
+    <resultMap id="MahjongRoomMap" type="com.niuma.admin.dto.GameRoomDTO">
+        <result column="venue_id" property="venueId" />
+        <result column="owner_id" property="ownerId" />
+        <result column="number" property="number" />
+        <result column="mode" property="mode" />
+        <result column="di_zhu" property="diZhu" />
+        <result column="rule" property="rule" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+    <select id="getRooms" resultMap="MahjongRoomMap">
+        select `t1`.`venue_id`, `t2`.`owner_id`, `t1`.`number`, `t1`.`mode`, `t1`.`di_zhu`, `t1`.`rule`, `t2`.`status`, `t2`.`create_time`
+        from `game_mahjong` `t1` inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="mahjong_room_condition"/>
+        </where>
+        order by `t1`.`id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+</mapper>

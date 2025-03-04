@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.GameBiJiMapper">
+    <select id="hasNumber" resultType="Integer">
+        select count(*) from `game_bi_ji` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getIdByNumber" resultType="String">
+        select `t1`.`venue_id` from `game_bi_ji` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getNumber" resultType="String">
+        select `number` from `game_bi_ji` where `venue_id` = #{venueId}
+    </select>
+
+    <resultMap id="BiJiPublicRoomMap" type="com.niuma.admin.dto.RoomItemDTO">
+        <result column="venue_id" property="venueId" />
+        <result column="number" property="number" />
+        <result column="game_type" property="gameType" />
+        <result column="owner_id" property="ownerId" />
+        <result column="mode" property="mode" />
+        <result column="di_zhu" property="diZhu" />
+    </resultMap>
+    <select id="getPublicRooms" resultMap="BiJiPublicRoomMap">
+        select `t1`.`venue_id`, `t1`.`number`, `t2`.`game_type`, `t2`.`owner_id`, `t1`.`mode`, `t1`.`di_zhu`
+        from `game_bi_ji` `t1` inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`is_public` = 1 and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <sql id="bi_ji_room_condition">
+        <if test="venueId != null">
+            and `t1`.`venue_id` like #{venueId}
+        </if>
+        <if test="ownerId != null">
+            and `t2`.`owner_id` like #{ownerId}
+        </if>
+        <if test="number != null">
+            and `t1`.`number` like #{number}
+        </if>
+        <if test="startTime != null">
+            and `t2`.`create_time` <![CDATA[>]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and `t2`.`create_time` <![CDATA[<]]> #{endTime}
+        </if>
+    </sql>
+    <select id="countRoom" resultType="Integer">
+        select count(*) from `game_bi_ji` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="bi_ji_room_condition"/>
+        </where>
+    </select>
+
+    <resultMap id="BiJiRoomMap" type="com.niuma.admin.dto.GameRoomDTO">
+        <result column="venue_id" property="venueId" />
+        <result column="owner_id" property="ownerId" />
+        <result column="number" property="number" />
+        <result column="mode" property="mode" />
+        <result column="di_zhu" property="diZhu" />
+        <result column="is_public" property="isPublic" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+    <select id="getRooms" resultMap="BiJiRoomMap">
+        select `t1`.`venue_id`, `t2`.`owner_id`, `t1`.`number`, `t1`.`mode`, `t1`.`di_zhu`, `t1`.`is_public`, `t2`.`status`, `t2`.`create_time`
+        from `game_bi_ji` `t1` inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="bi_ji_room_condition"/>
+        </where>
+        order by `t1`.`id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+</mapper>

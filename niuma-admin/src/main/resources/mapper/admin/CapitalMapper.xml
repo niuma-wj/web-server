@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.CapitalMapper">
+    <select id="getGold" resultType="Long">
+        select `gold` from `capital` where `player_id` = #{id}
+    </select>
+
+    <select id="getDiamond" resultType="Long">
+        select `diamond` from `capital` where `player_id` = #{id}
+    </select>
+
+    <resultMap id="CapitalMap" type="com.niuma.admin.data.CapitalAmount">
+        <result column="gold" property="gold"/>
+        <result column="deposit" property="deposit"/>
+        <result column="diamond" property="diamond"/>
+        <result column="version" property="version"/>
+    </resultMap>
+    <select id="getCapital" resultMap="CapitalMap">
+        select `gold`, `deposit`, `diamond`, `version` from `capital` where `player_id` = #{id}
+    </select>
+
+    <update id="setCapital">
+        update `capital`
+        <set>
+            <if test="gold != null">
+                `gold` = #{gold},
+            </if>
+            <if test="deposit != null">
+                `deposit` = #{deposit},
+            </if>
+            <if test="diamond != null">
+                `diamond` = #{diamond},
+            </if>
+            `version` = `version` + 1,
+        </set>
+        where `player_id` = #{id} and `version` = #{version}
+    </update>
+
+    <select id="getBankPassword" resultType="String">
+        select `password` from `capital` where `player_id` = #{id}
+    </select>
+
+    <update id="updateBankPassword">
+        update `capital` set `password` = #{password} where `player_id` = #{id}
+    </update>
+
+    <resultMap id="AccountMap" type="com.niuma.admin.dto.AccountDTO">
+        <result column="alipay_account" property="alipayAccount"/>
+        <result column="alipay_name" property="alipayName"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="bank_name" property="bankName"/>
+    </resultMap>
+    <select id="getAccount" resultMap="AccountMap">
+        select `alipay_account`, `alipay_name`, `bank_account`, `bank_name` from `capital` where `player_id` = #{id}
+    </select>
+
+    <update id="setAlipayAccount">
+        update `capital` set `alipay_account` = #{account}, `alipay_name` = #{name} where `player_id` = #{id}
+    </update>
+
+    <update id="setBankAccount">
+        update `capital` set `bank_account` = #{account}, `bank_name` = #{name} where `player_id` = #{id}
+    </update>
+</mapper>

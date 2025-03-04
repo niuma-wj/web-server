@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.PlayerMapper">
+    <select id="getIdByName" resultType="String">
+        select `id` from `player` where `name` = #{name} and `del_flag` = 0
+    </select>
+
+    <select id="getNickname" resultType="String">
+        select `nickname` from `player` where `id` = #{id}
+    </select>
+
+    <update id="updateLogin">
+        update `player` set `login_ip` = #{ip}, `login_date` = now() where `id` = #{id}
+    </update>
+
+    <update id="updateHeartbeat">
+        update `player` set `heartbeat` = #{timestamp} where `id` = #{id}
+    </update>
+
+    <select id="getAgencyId" resultType="String">
+        select `agency_id` from `player` where `id` = #{id}
+    </select>
+
+    <update id="updateAgencyId">
+        update `player` set `agency_id` = #{agencyId}, `update_time` = now() where `id` = #{id}
+    </update>
+
+    <select id="countJuniorPlayer" resultType="Integer">
+        select count(*) from `player` where `agency_id` = #{id}
+    </select>
+
+    <resultMap id="JuniorPlayerMap" type="com.niuma.admin.dto.JuniorPlayerDTO">
+        <result column="id" property="playerId" />
+        <result column="nickname" property="nickname" />
+        <result column="login_date" property="loginTime" />
+    </resultMap>
+    <select id="getJuniorPlayers" resultMap="JuniorPlayerMap">
+        select `id`, `nickname`, `login_date`
+        from `player` where `agency_id` = #{playerId}
+        order by `update_time` desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <resultMap id="PlayerBaseMap" type="com.niuma.admin.dto.PlayerBaseDTO">
+        <id column="id" property="playerId" />
+        <result column="nickname" property="nickname" />
+        <result column="avatar" property="headUrl" />
+    </resultMap>
+    <select id="getBaseInfo" resultMap="PlayerBaseMap">
+        select `id`, `nickname`, `avatar` from `player` where `id` = #{id}
+    </select>
+
+    <insert id="addPlayer" parameterType="com.niuma.admin.entity.Player">
+        insert into `player`(`id`, `name`, `password`, `nickname`, `sex`, `avatar`, `create_time`, `update_time`)
+        values (#{entity.id}, #{entity.name}, #{entity.password}, #{entity.nickname}, #{entity.sex}, #{entity.avatar}, now(), now())
+    </insert>
+
+    <select id="countHeadImageUrls" resultType="Integer">
+        select count(*) from `player_head_image_url`
+    </select>
+
+    <select id="getHeadImageUrl" resultType="String">
+        select `url` from `player_head_image_url` where `id` = #{id}
+    </select>
+
+    <sql id="player_condition">
+        <if test="id != null">
+            and `id` like #{id}
+        </if>
+        <if test="nickname != null">
+            and `nickname` like #{nickname}
+        </if>
+        <if test="online == 1">
+            and `heartbeat` <![CDATA[>=]]> #{heartbeat}
+        </if>
+        <if test="online == 0">
+            and `heartbeat` <![CDATA[<]]> #{heartbeat}
+        </if>
+    </sql>
+    <select id="countPlayer" resultType="Integer">
+        select count(*) from `player`
+        <where>
+            <include refid="player_condition"/>
+        </where>
+    </select>
+
+    <resultMap id="PlayerMap" type="com.niuma.admin.dto.PlayerDTO">
+        <result column="id" property="playerId" />
+        <result column="nickname" property="nickname" />
+        <result column="avatar" property="headUrl" />
+        <result column="phone" property="phone" />
+        <result column="sex" property="sex" />
+        <result column="agency_id" property="agencyId" />
+        <result column="login_ip" property="loginIp" />
+        <result column="login_date" property="loginDate" />
+        <result column="heartbeat" property="heartbeat" />
+        <result column="banned" property="banned" />
+    </resultMap>
+    <select id="getPage" resultMap="PlayerMap">
+        select `id`, `nickname`, `avatar`, `phone`, `sex`, `agency_id`, `login_ip`, `login_date`, `heartbeat`, `banned`
+        from `player`
+        <where>
+            <include refid="player_condition"/>
+        </where>
+        order by `create_time` desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <update id="setBanned">
+        update `player` set `banned` = #{banned} where `id` = #{id}
+    </update>
+</mapper>

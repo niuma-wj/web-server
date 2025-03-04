@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.AgencyMapper">
+    <select id="isAgency" resultType="Integer">
+        select count(*) from `agency` where `player_id` = #{playerId}
+    </select>
+
+    <select id="getLevel" resultType="Integer">
+        select `level` from `agency` where `player_id` = #{playerId}
+    </select>
+
+    <select id="getJuniorCount" resultType="Integer">
+        select `junior_count` from `agency` where `player_id` = #{playerId}
+    </select>
+
+    <update id="juniorCountAddOne">
+        update `agency` set `junior_count` = `junior_count` + 1 where `player_id` = #{playerId}
+    </update>
+
+    <select id="getCurrentReward" resultType="Long">
+        select sum(`amount`) from `agency_reward` where `player_id` = #{playerId} and `collect_id` is null
+    </select>
+
+    <select id="getIndirectReward" resultType="Long">
+        select sum(`amount`) from `agency_reward`  where `player_id` = #{playerId} and `indirect` = 1
+    </select>
+
+    <select id="getLevelAndJuniorCount" resultType="com.niuma.common.dto.IntPairDTO">
+        select `level` as `value1`, `junior_count` as `value2` from `agency` where `player_id` = #{playerId}
+    </select>
+
+    <select id="getTotalReward" resultType="Long">
+        select sum(`amount`) from `agency_reward`  where `player_id` = #{playerId} and `junior_id` = #{juniorId}
+    </select>
+
+    <select id="countReward" resultType="Integer">
+        select count(*) from `agency_reward`  where `player_id` = #{playerId}
+    </select>
+
+    <resultMap id="RewardMap" type="com.niuma.admin.dto.RewardDTO">
+        <result column="junior_id" property="juniorId" />
+        <result column="amount" property="amount" />
+        <result column="collect_id" property="collectId" />
+        <result column="remark" property="remark" />
+        <result column="time" property="time" />
+    </resultMap>
+    <select id="getRewards" resultMap="RewardMap">
+        select `junior_id`, `amount`, `collect_id`, `remark`, `time`
+        from `agency_reward` where `player_id` = #{playerId}
+        order by `id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="getCurrentRewards" resultType="com.niuma.common.dto.LongPairDTO">
+        select `id` as `value1`, `amount` as `value2` from `agency_reward` where `player_id` = #{playerId} and `collect_id` is null
+    </select>
+
+    <update id="collectRewards">
+        update `agency_reward` set `collect_id` = #{collectId} where `id` in
+        <foreach item="id" collection="ids" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="addTotalReward">
+        update `agency` set `total_reward` = `total_reward` + #{totalReward} where `player_id` = #{playerId}
+    </update>
+
+    <select id="getTotalReward1" resultType="Long">
+        select `total_reward` from `agency` where `player_id` = #{playerId}
+    </select>
+
+    <select id="countCollect" resultType="Integer">
+        select count(*) from `agency_collect` where `player_id` = #{playerId}
+    </select>
+
+    <resultMap id="CollectRecordMap" type="com.niuma.admin.dto.CollectRecordDTO">
+        <result column="amount" property="amount" />
+        <result column="time" property="time" />
+    </resultMap>
+    <select id="getCollectRecord" resultMap="CollectRecordMap">
+        select `amount`, `time`
+        from `agency_collect`
+        where `player_id` = #{playerId}
+        order by `id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+</mapper>

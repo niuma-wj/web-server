@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.ExchangeMapper">
+    <select id="countRecord" resultType="Integer">
+        select count(*) from `exchange` where `player_id` = #{playerId}
+    </select>
+    
+    <resultMap id="ExchangeRecordMap" type="com.niuma.admin.dto.ExchangeRecordDTO">
+        <result column="amount" property="amount" />
+        <result column="account" property="account" />
+        <result column="account_name" property="accountName" />
+        <result column="account_type" property="accountType" />
+        <result column="status" property="status" />
+        <result column="order_number" property="orderNumber" />
+        <result column="apply_time" property="applyTime" />
+        <result column="dispose_time" property="disposeTime" />
+    </resultMap>
+    <select id="getPage" resultMap="ExchangeRecordMap">
+        select `amount`, `account`, `account_name`, `account_type`,
+            `status`, `order_number`, `apply_time`, `dispose_time`
+        from `exchange`
+        where `player_id` = #{playerId}
+        order by `id` desc
+        limit #{offset}, #{pageSize}
+    </select>
+</mapper>
