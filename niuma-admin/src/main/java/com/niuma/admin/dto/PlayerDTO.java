@@ -11,6 +11,11 @@ import lombok.Data;
 @Data
 public class PlayerDTO extends PlayerBaseDTO {
     /**
+     * 登录账号
+     */
+    private String account;
+
+    /**
      * 联系电话
      */
     private String phone;

@@ -204,6 +204,7 @@ public class PlayerServiceImpl extends ServiceImpl<PlayerMapper, Player> impleme
         String id = this.baseMapper.getIdByName(name);
         if (StringUtils.isNotEmpty(id))
             throw new NotFoundException(NiuMaCodeEnum.PLAYER_REGISTER_ERROR.getCode(), "账号已存在");
+        log.info("Player register, name: {}, password: {}, nickname: {}", name, password, dto.getNickname());
         password = this.bCryptPasswordEncoder.encode(password);
         Player entity = new Player();
         entity.setId(generatePlayerId());

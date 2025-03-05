@@ -88,6 +88,7 @@
         <result column="id" property="playerId" />
         <result column="nickname" property="nickname" />
         <result column="avatar" property="headUrl" />
+        <result column="name" property="account" />
         <result column="phone" property="phone" />
         <result column="sex" property="sex" />
         <result column="agency_id" property="agencyId" />
@@ -97,7 +98,7 @@
         <result column="banned" property="banned" />
     </resultMap>
     <select id="getPage" resultMap="PlayerMap">
-        select `id`, `nickname`, `avatar`, `phone`, `sex`, `agency_id`, `login_ip`, `login_date`, `heartbeat`, `banned`
+        select `id`, `nickname`, `avatar`, `name`, `phone`, `sex`, `agency_id`, `login_ip`, `login_date`, `heartbeat`, `banned`
         from `player`
         <where>
             <include refid="player_condition"/>
