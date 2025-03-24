@@ -24,8 +24,11 @@ import java.util.Map;
 
 /**
  * HttpClient 工具类
+ * @author wujian
+ * @email 393817707@qq.com
+ * @date 2024.11.02
  */
-public class HttpClientUtils {
+public final class HttpClientUtils {
     public static final String APPLICATION_JSON_VALUE = "application/json";
     private static final Integer CONN_TIME_OUT = 3000;// 超时时间豪秒
     private static final Integer SOCKET_TIME_OUT = 10000;
@@ -95,11 +98,14 @@ public class HttpClientUtils {
     }
 
     /**
-     * @param url
-     * @param params
+     * POST表单
+     * @param url 请求地址
+     * @param headers 请求头
+     * @param params 地址参数
+     * @param table 提交表单
      * @return 响应结果
      */
-    public static HttpResult post(String url, Map<String, Object> headers, Map<String, Object> params) throws Exception {
+    public static HttpResult post(String url, Map<String, Object> headers, Map<String, Object> params, Map<String, Object> table) throws Exception {
         // Post请求
         HttpPost httpPost = new HttpPost(url);
         RequestConfig requestConfig = RequestConfig.custom()
@@ -107,12 +113,28 @@ public class HttpClientUtils {
                 .setSocketTimeout(5000).build();
         httpPost.setConfig(requestConfig);
         try {
-            if (headers != null) {
+            List<NameValuePair> paramList = null;
+            // 地址参数
+            if ((params != null) && !params.isEmpty()) {
+                paramList = initParams(params);
+                String str = EntityUtils.toString(new UrlEncodedFormEntity(paramList, StandardCharsets.UTF_8));
+                String uriStr = null;
+                if (StringUtils.hasLength(str))
+                    uriStr = httpPost.getURI().toString() + "?" + str;
+                else
+                    uriStr = httpPost.getURI().toString();
+                httpPost.setURI(new URI(uriStr));
+            }
+            // 请求头
+            if ((headers != null) && !headers.isEmpty()) {
                 for (Map.Entry<String, Object> entry : headers.entrySet())
                     httpPost.setHeader(entry.getKey(), entry.getValue().toString());
             }
-            List<NameValuePair> paramList = initParams(params);
-            httpPost.setEntity(new UrlEncodedFormEntity(paramList, Consts.UTF_8));
+            // 提交表单
+            if ((table != null) && !table.isEmpty()) {
+                paramList = initParams(params);
+                httpPost.setEntity(new UrlEncodedFormEntity(paramList, Consts.UTF_8));
+            }
             // 发送请求
             HttpResponse response = httpClient.execute(httpPost);
 
@@ -170,8 +192,11 @@ public class HttpClientUtils {
         List<NameValuePair> paramList = new ArrayList<NameValuePair>();
         if (params == null)
             return paramList;
-        for (Map.Entry<String, Object> entry : params.entrySet())
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            if ((entry.getKey() == null) || (entry.getValue() == null))
+                continue;
             paramList.add(new BasicNameValuePair(entry.getKey(), entry.getValue().toString()));
+        }
         return paramList;
     }
 }
