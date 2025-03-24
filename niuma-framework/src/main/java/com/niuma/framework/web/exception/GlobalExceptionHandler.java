@@ -195,7 +195,7 @@ public class GlobalExceptionHandler
      * @date 2024.09.04
      */
     @ExceptionHandler(ForbiddenException.class)
-    @ResponseStatus(org.springframework.http.HttpStatus.BAD_REQUEST)
+    @ResponseStatus(org.springframework.http.HttpStatus.FORBIDDEN)
     public AjaxResult handleForbiddenException(ForbiddenException e) {
         return handleHttpException(e.getCode(), e.getMessage());
     }
