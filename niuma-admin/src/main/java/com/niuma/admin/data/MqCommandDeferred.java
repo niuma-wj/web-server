@@ -28,7 +28,12 @@ public class MqCommandDeferred {
     private final String commandId;
 
     /**
-     * 场地id
+     * 当前所在的场地id
+     */
+    private String currentVenue;
+
+    /**
+     * 要进入的场地id或者区域id
      */
     private String venueId;
 
@@ -63,6 +68,14 @@ public class MqCommandDeferred {
 
     public String getCommandId() {
         return this.commandId;
+    }
+
+    public void setCurrentVenue(String currentVenue) {
+        this.currentVenue = currentVenue;
+    }
+
+    public String getCurrentVenue() {
+        return this.currentVenue;
     }
 
     public void setVenueId(String venueId) {

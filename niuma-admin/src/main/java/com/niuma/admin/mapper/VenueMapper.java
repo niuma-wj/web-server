@@ -13,4 +13,11 @@ public interface VenueMapper extends BaseMapper<Venue> {
      * @return 游戏类型
      */
     Integer getGameType(@Param("id") String id);
+
+    /**
+     * 获取场地所属的区域id
+     * @param id 场地id
+     * @return 区域id
+     */
+    Integer getDistrictId(@Param("id") String id);
 }

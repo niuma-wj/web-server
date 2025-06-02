@@ -27,6 +27,11 @@ public class Venue {
     private String ownerId;
 
     /**
+     * 场地所属区域id
+     */
+    private Integer districtId;
+
+    /**
      * 游戏类型
      */
     private Integer gameType;

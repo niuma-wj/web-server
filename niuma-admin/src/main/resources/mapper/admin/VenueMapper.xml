@@ -4,4 +4,8 @@
     <select id="getGameType" resultType="Integer">
         select `game_type` from `venue` where `id` = #{id}
     </select>
+
+    <select id="getDistrictId" resultType="Integer">
+        select `district_id` from `venue` where `id` = #{id}
+    </select>
 </mapper>

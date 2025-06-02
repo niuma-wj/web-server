@@ -211,6 +211,7 @@ public class GameServiceImpl implements IGameService {
             throw new InternalServerException(NiuMaCodeEnum.SERVER_INACCESSIBLE);
         }
         MqCommandDeferred actionDeferred = createCommandDeferred(playerId);
+        actionDeferred.setCurrentVenue(currentVenue);
         // 发送MQ消息通知玩家离开当前场地
         MqLeaveVenue cmd = new MqLeaveVenue();
         cmd.setPlayerId(playerId);
@@ -1023,6 +1024,7 @@ public class GameServiceImpl implements IGameService {
         String venueId = null;
         Venue venue = new Venue();
         venue.setOwnerId("0000000000");
+        venue.setDistrictId(districtId);
         venue.setStatus(0);
         venue.setCreateTime(LocalDateTime.now());
         if (districtId.equals(NiuMaConstants.DISTRICT_LACKEY_BEGINNER) ||
@@ -1192,11 +1194,30 @@ public class GameServiceImpl implements IGameService {
         MqCommandDeferred cmd = getCommandDeferred(result.getCommandId());
         if (cmd == null)
             return;
+        DeferredResult<ResponseEntity<AjaxResult> > deferredResult = cmd.getResult();
         // 异步命令完成，释放进入场地锁
         String lockKey = NiuMaRedisKeys.PLAYER_ENTER_LOCK + cmd.getPlayerId();
         this.redisPrimitive.delete(lockKey);
-        DeferredResult<ResponseEntity<AjaxResult> > deferredResult = cmd.getResult();
+        int action = cmd.getAction();
+        Integer districtId = null;
+        if (action == NiuMaConstants.ACTION_ENTER_DISTRICT) {
+            try {
+                districtId = Integer.parseInt(cmd.getVenueId());
+            } catch (NumberFormatException ex) {
+                AjaxResult ajax = AjaxResult.error(ResultCodeEnum.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage());
+                deferredResult.setResult(new ResponseEntity<>(ajax, HttpStatus.INTERNAL_SERVER_ERROR));
+                return;
+            }
+        }
         if ((result.getResult() != null) && !(result.getResult().equals(0))) {
+            if (action == NiuMaConstants.ACTION_ENTER_DISTRICT) {
+                // 进入区域，离开当前所在的场地失败，判断当前所在的场地是否属于要进入的区域，若是则立即重新进入当前所在的场地
+                Integer tmpId = this.venueMapper.getDistrictId(cmd.getCurrentVenue());
+                if ((tmpId != null) && (tmpId.equals(districtId))) {
+                    responseEnterVenue(deferredResult, cmd.getPlayerId(), cmd.getCurrentVenue());
+                    return;
+                }
+            }
             // 返回错误
             AjaxResult ajax = new AjaxResult();
             ajax.put(AjaxResult.CODE_TAG, NiuMaCodeEnum.DEFERRED_COMMAND_FAILED.getCode());
@@ -1205,7 +1226,6 @@ public class GameServiceImpl implements IGameService {
             deferredResult.setResult(new ResponseEntity<>(ajax, HttpStatus.INTERNAL_SERVER_ERROR));
             return;
         }
-        int action = cmd.getAction();
         if (action == NiuMaConstants.ACTION_CREATE_GAME) {
             try {
                 // 创建游戏
@@ -1227,14 +1247,6 @@ public class GameServiceImpl implements IGameService {
             responseEnterVenue(deferredResult, playerId, venueId);
         } else if (action == NiuMaConstants.ACTION_ENTER_DISTRICT) {
             String playerId = cmd.getPlayerId();
-            Integer districtId = null;
-            try {
-                districtId = Integer.parseInt(cmd.getVenueId());
-            } catch (NumberFormatException ex) {
-                AjaxResult ajax = AjaxResult.error(ResultCodeEnum.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage());
-                deferredResult.setResult(new ResponseEntity<>(ajax, HttpStatus.INTERNAL_SERVER_ERROR));
-                return;
-            }
             // 响应进入指定区域
             responseEnterDistrict(deferredResult, playerId, districtId);
         }
