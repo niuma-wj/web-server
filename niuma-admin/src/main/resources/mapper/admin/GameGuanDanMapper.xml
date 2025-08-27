@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.GameGuanDanMapper">
+    <select id="hasNumber" resultType="Integer">
+        select count(*) from `game_guan_dan` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getIdByNumber" resultType="String">
+        select `t1`.`venue_id` from `game_guan_dan` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t1`.`number` = #{number} and `t2`.`status` <![CDATA[<]]> 2
+    </select>
+
+    <select id="getNumber" resultType="String">
+        select `number` from `game_guan_dan` where `venue_id` = #{venueId}
+    </select>
+</mapper>

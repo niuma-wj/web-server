@@ -134,4 +134,16 @@ public interface PlayerMapper extends BaseMapper<Player> {
      * @param banned 0-启用，1-禁用
      */
     void setBanned(@Param("id") String id, @Param("banned") Integer banned);
+
+    /**
+     * 查询最大的机器人id
+     * @return 最大的机器人id
+     */
+    Integer getMaxRobotId();
+
+    /**
+     * 插入机器人
+     * @param playerId 玩家id
+     */
+    void insertRobot(@Param("playerId") String playerId);
 }

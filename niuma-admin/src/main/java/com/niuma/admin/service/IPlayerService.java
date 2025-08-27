@@ -46,6 +46,8 @@ public interface IPlayerService extends IService<Player> {
 
     AjaxResult location(LocationDTO dto);
 
+    AjaxResult createRobots(String text);
+
     /**
      * 分页获取玩家数据
      * @param dto 请求体

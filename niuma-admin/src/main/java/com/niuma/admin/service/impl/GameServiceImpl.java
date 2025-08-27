@@ -93,6 +93,9 @@ public class GameServiceImpl implements IGameService {
     private GameNiu100Mapper niu100Mapper;
 
     @Resource
+    private GameGuanDanMapper guanDanMapper;
+
+    @Resource
     private GameFaultMapper gameFaultMapper;
 
     @Resource
@@ -338,6 +341,20 @@ public class GameServiceImpl implements IGameService {
         }
     }
 
+    private static class GuanDanNumberTester implements CommonUtils.DuplicateTester {
+        private GameGuanDanMapper mapper;
+
+        public GuanDanNumberTester(GameGuanDanMapper mapper) {
+            this.mapper = mapper;
+        }
+
+        @Override
+        public boolean testDuplicate(String code) {
+            Integer count = this.mapper.hasNumber(code);
+            return CommonUtils.predicate(count);
+        }
+    }
+
     /**
      * 生成场地id
      * @return 场地id
@@ -373,6 +390,7 @@ public class GameServiceImpl implements IGameService {
         GameBiJi biJi = null;
         GameLackey lackey = null;
         GameNiu100 niu100 = null;
+        GameGuanDan guanDan = null;
         if (gameType.equals(NiuMaConstants.GAME_TYPE_MAHJONG))
             mahjong = checkCreateMahjong(playerId, json);
         else if (gameType.equals(NiuMaConstants.GAME_TYPE_BI_JI))
@@ -381,6 +399,8 @@ public class GameServiceImpl implements IGameService {
             lackey = checkCreateLackey(playerId, json);
         else if (gameType.equals(NiuMaConstants.GAME_TYPE_NIU_NIU_100))
             niu100 = checkCreateNiu100(playerId, json);
+        else if (gameType.equals(NiuMaConstants.GAME_TYPE_GUAN_DAN))
+            guanDan = checkCreateGuanDan(playerId, json);
         String venueId = null;
         try {
             venueId = generateVenueId();
@@ -394,13 +414,15 @@ public class GameServiceImpl implements IGameService {
             if (gameType.equals(NiuMaConstants.GAME_TYPE_DUMB))
                 createDumbGame(venueId);
             else if (gameType.equals(NiuMaConstants.GAME_TYPE_MAHJONG))
-                CreateMahjong(mahjong, venueId);
+                createMahjong(mahjong, venueId);
             else if (gameType.equals(NiuMaConstants.GAME_TYPE_BI_JI))
-                CreateBiJi(biJi, venueId);
+                createBiJi(biJi, venueId);
             else if (gameType.equals(NiuMaConstants.GAME_TYPE_LACKEY))
-                CreateLackey(lackey, venueId);
+                createLackey(lackey, venueId);
             else if (gameType.equals(NiuMaConstants.GAME_TYPE_NIU_NIU_100))
-                CreateNiu100(niu100, venueId);
+                createNiu100(niu100, venueId);
+            else if (gameType.equals(NiuMaConstants.GAME_TYPE_GUAN_DAN))
+                createGuanDan(guanDan, venueId);
         } catch (Exception ex) {
             if (StringUtils.isNotEmpty(venueId)) {
                 LambdaQueryWrapper<Venue> query = Wrappers.lambdaQuery();
@@ -470,7 +492,7 @@ public class GameServiceImpl implements IGameService {
         return entity;
     }
 
-    private void CreateMahjong(GameMahjong entity, String venueId) {
+    private void createMahjong(GameMahjong entity, String venueId) {
         entity.setVenueId(venueId);
         this.mahjongMapper.insert(entity);
     }
@@ -516,7 +538,7 @@ public class GameServiceImpl implements IGameService {
         return entity;
     }
 
-    private void CreateBiJi(GameBiJi entity, String venueId) {
+    private void createBiJi(GameBiJi entity, String venueId) {
         entity.setVenueId(venueId);
         this.biJiMapper.insert(entity);
     }
@@ -568,7 +590,7 @@ public class GameServiceImpl implements IGameService {
         return entity;
     }
 
-    private void CreateLackey(GameLackey entity, String venueId) {
+    private void createLackey(GameLackey entity, String venueId) {
         entity.setVenueId(venueId);
         this.lackeyMapper.insert(entity);
     }
@@ -607,9 +629,45 @@ public class GameServiceImpl implements IGameService {
         return entity;
     }
 
-    private void CreateNiu100(GameNiu100 entity, String venueId) {
+    private void createNiu100(GameNiu100 entity, String venueId) {
         entity.setVenueId(venueId);
         this.niu100Mapper.insert(entity);
+    }
+
+    private enum GuanDanLevel {
+        Invalid,	// 无效
+        Friend,		// 好友房
+        Practice,   // 练习房(单机模式)
+        Beginner,	// 初级房
+        Moderate,	// 中级房
+        Advanced,	// 高级房
+        Master		// 大师房
+    };
+
+    private GameGuanDan checkCreateGuanDan(String playerId, String json) {
+        JSONObject jsonObject = JSONObject.parseObject(json);
+        if (jsonObject == null)
+            throw new BadRequestException(ResultCodeEnum.BAD_REQUEST.getCode(), "Required parameters missing");
+        Integer level = jsonObject.getInteger("level");
+        if (level == null)
+            throw new BadRequestException(ResultCodeEnum.BAD_REQUEST.getCode(), "未指定房间类型");
+        if (!(level.equals(GuanDanLevel.Practice.ordinal()) || level.equals(GuanDanLevel.Friend.ordinal())))
+            throw new BadRequestException(ResultCodeEnum.BAD_REQUEST.getCode(), "房间类型错误");
+        String number = null;
+        if (level.equals(GuanDanLevel.Friend.ordinal()))
+            number = this.generateNumber(new GuanDanNumberTester(this.guanDanMapper));
+        else
+            number = "practice";
+        log.info("玩家(ID：{})创建经典掼蛋游戏(房号：{}", playerId, number);
+        GameGuanDan entity = new GameGuanDan();
+        entity.setNumber(number);
+        entity.setLevel(level);
+        return entity;
+    }
+
+    private void createGuanDan(GameGuanDan entity, String venueId) {
+        entity.setVenueId(venueId);
+        this.guanDanMapper.insert(entity);
     }
 
     @Override
@@ -627,7 +685,8 @@ public class GameServiceImpl implements IGameService {
                     gameType.equals(NiuMaConstants.GAME_TYPE_MAHJONG) ||
                     gameType.equals(NiuMaConstants.GAME_TYPE_NIU_NIU_100) ||
                     gameType.equals(NiuMaConstants.GAME_TYPE_BI_JI) ||
-                    gameType.equals(NiuMaConstants.GAME_TYPE_LACKEY)))
+                    gameType.equals(NiuMaConstants.GAME_TYPE_LACKEY) ||
+                    gameType.equals(NiuMaConstants.GAME_TYPE_GUAN_DAN)))
                 throw new ForbiddenException(NiuMaCodeEnum.GAME_TYPE_ERROR.getCode(), "Unsupported game type");
             LoginPlayer player = PlayerSecurityUtils.getLoginPlayer();
             String playerId = null;
@@ -812,6 +871,8 @@ public class GameServiceImpl implements IGameService {
             venueId = this.lackeyMapper.getIdByNumber(dto.getNumber());
         else if (gameType.equals(NiuMaConstants.GAME_TYPE_NIU_NIU_100))
             venueId = this.niu100Mapper.getIdByNumber(dto.getNumber());
+        else if (gameType.equals(NiuMaConstants.GAME_TYPE_GUAN_DAN))
+            venueId = this.guanDanMapper.getIdByNumber(dto.getNumber());
         if (StringUtils.isEmpty(venueId)) {
             AjaxResult ajax = new AjaxResult();
             ajax.put(AjaxResult.CODE_TAG, NiuMaCodeEnum.VENUE_NOT_EXIST.getCode());
@@ -831,7 +892,12 @@ public class GameServiceImpl implements IGameService {
             districtId.equals(NiuMaConstants.DISTRICT_LACKEY_MODERATE) ||
             districtId.equals(NiuMaConstants.DISTRICT_LACKEY_ADVANCED) ||
             districtId.equals(NiuMaConstants.DISTRICT_LACKEY_MASTER))
-            ret = 6;
+            ret = 5;
+        else if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_BEGINNER) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MODERATE) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_ADVANCED) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MASTER))
+            ret = 4;
         return ret;
     }
 
@@ -1057,6 +1123,28 @@ public class GameServiceImpl implements IGameService {
                 entity.setDiZhu(1000);
             }
             this.lackeyMapper.insert(entity);
+        } else if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_BEGINNER) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MODERATE) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_ADVANCED) ||
+                districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MASTER)) {
+            venueId = generateVenueId();
+            venue.setId(venueId);
+            venue.setGameType(NiuMaConstants.GAME_TYPE_GUAN_DAN);
+            this.venueMapper.insert(venue);
+            String number = "dist-" + districtId.toString();
+            GameGuanDan entity = new GameGuanDan();
+            entity.setVenueId(venueId);
+            entity.setNumber(number);
+            if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_BEGINNER)) {
+                entity.setLevel(GuanDanLevel.Beginner.ordinal());
+            } else if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MODERATE)) {
+                entity.setLevel(GuanDanLevel.Moderate.ordinal());
+            } else if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_ADVANCED)) {
+                entity.setLevel(GuanDanLevel.Advanced.ordinal());
+            } else if (districtId.equals(NiuMaConstants.DISTRICT_GUAN_DAN_MASTER)) {
+                entity.setLevel(GuanDanLevel.Master.ordinal());
+            }
+            this.guanDanMapper.insert(entity);
         }
         return venueId;
     }

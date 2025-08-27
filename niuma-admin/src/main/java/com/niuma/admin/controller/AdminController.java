@@ -7,6 +7,7 @@ import com.niuma.admin.dto.PlayerReqDTO;
 import com.niuma.admin.service.IGameService;
 import com.niuma.admin.service.IPlayerService;
 import com.niuma.common.core.domain.AjaxResult;
+import com.niuma.common.dto.TextDTO;
 import com.niuma.common.page.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -92,5 +93,15 @@ public class AdminController {
     @PreAuthorize("@ss.hasPermi('niuma:niu100')")
     public PageResult<GameRoomDTO> getNiu100(@RequestBody GameRoomReqDTO dto) {
         return this.gameService.getNiu100(dto);
+    }
+
+    /**
+     * 创建机器人
+     * @param dto 机器人昵称列表，以英文逗号分隔
+     * @return
+     */
+    @PostMapping("/robot/create")
+    public AjaxResult createRobots(@RequestBody TextDTO dto) {
+        return this.playerService.createRobots(dto.getText());
     }
 }

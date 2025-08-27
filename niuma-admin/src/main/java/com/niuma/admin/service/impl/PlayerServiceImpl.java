@@ -9,6 +9,7 @@ import com.niuma.admin.constant.NiuMaRedisKeys;
 import com.niuma.admin.dto.*;
 import com.niuma.admin.entity.Capital;
 import com.niuma.admin.entity.Player;
+import com.niuma.admin.entity.Robot;
 import com.niuma.admin.factory.PlayerAsyncFactory;
 import com.niuma.admin.mapper.*;
 import com.niuma.admin.service.ICapitalService;
@@ -75,6 +76,9 @@ public class PlayerServiceImpl extends ServiceImpl<PlayerMapper, Player> impleme
 
     @Resource
     private VenueMapper venueMapper;
+
+    @Resource
+    private RobotMapper robotMapper;
 
     @Resource
     private GameMahjongMapper mahjongMapper;
@@ -405,5 +409,60 @@ public class PlayerServiceImpl extends ServiceImpl<PlayerMapper, Player> impleme
             redisKey = CacheConstants.PLAYER_ACTIVE_KEY + playerId;
             this.redisCache.deleteObject(redisKey);
         }
+    }
+
+    @Override
+    public AjaxResult createRobots(String text) {
+        if (StringUtils.isEmpty(text))
+            throw new BadRequestException(ResultCodeEnum.BAD_REQUEST.getCode(), "请输入昵称，多个昵称用英文逗号分隔");
+        Random rand = new Random();
+        int number = 0;
+        Integer count = this.baseMapper.countHeadImageUrls();
+        Integer imgId = null;
+        StringBuilder sb = new StringBuilder();
+        String[] nicknames = text.split(",");
+        Player entity = null;
+        Capital capital = null;
+        for (int i = 0; i < nicknames.length; i++) {
+            String nickname = nicknames[i];
+            if (StringUtils.isEmpty(nickname))
+                continue;
+            if (nickname.length() > 20)
+                continue;
+            entity = new Player();
+            entity.setId(generatePlayerId());
+            try {
+                Robot tmp = new Robot();
+                tmp.setPlayerId(entity.getId());
+                this.robotMapper.insert(tmp);
+                entity.setName(String.format("Arobot_%04d", tmp.getId()));
+            } catch (Exception ex) {
+                continue;
+            }
+            entity.setPassword(this.bCryptPasswordEncoder.encode(CommonUtils.generatePassword(8)));
+            entity.setNickname(nickname);
+            // 创建随机电话号码
+            number = rand.nextInt(70);
+            number += 130;
+            sb.setLength(0);
+            sb.append(number);
+            for (int j = 0; j < 8; j++) {
+                number = rand.nextInt(10);
+                sb.append(number);
+            }
+            entity.setPhone(sb.toString());
+            entity.setSex(rand.nextInt(2) + 1);
+            imgId = rand.nextInt(count);
+            entity.setAvatar(this.baseMapper.getHeadImageUrl(imgId));
+            this.save(entity);
+            // 添加资产
+            capital = new Capital();
+            capital.setPlayerId(entity.getId());
+            capital.setGold(1000000L);
+            capital.setDiamond(1000L);
+            capital.setVersion(1L);
+            this.capitalService.save(capital);
+        }
+        return AjaxResult.successEx();
     }
 }

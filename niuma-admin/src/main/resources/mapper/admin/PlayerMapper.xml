@@ -110,4 +110,8 @@
     <update id="setBanned">
         update `player` set `banned` = #{banned} where `id` = #{id}
     </update>
+
+    <select id="getMaxRobotId" resultType="Integer">
+        select max(`id`) from `robot`;
+    </select>
 </mapper>

@@ -73,6 +73,11 @@ public final class NiuMaConstants {
     public static final int GAME_TYPE_TRACTOR = 1029;
 
     /**
+     * 游戏类型：掼蛋
+     */
+    public static final int GAME_TYPE_GUAN_DAN = 1030;
+
+    /**
      * 区域ID-逮狗腿新手房
      */
     public static final int DISTRICT_LACKEY_BEGINNER = 1;
@@ -91,4 +96,24 @@ public final class NiuMaConstants {
      * 区域ID-逮狗大师房
      */
     public static final int DISTRICT_LACKEY_MASTER = 4;
+
+    /**
+     * 区域ID-掼蛋初级房
+     */
+    public static final int DISTRICT_GUAN_DAN_BEGINNER = 5;
+
+    /**
+     * 区域ID-掼蛋中级房
+     */
+    public static final int DISTRICT_GUAN_DAN_MODERATE = 6;
+
+    /**
+     * 区域ID-掼蛋高级房
+     */
+    public static final int DISTRICT_GUAN_DAN_ADVANCED = 7;
+
+    /**
+     * 区域ID-掼蛋大师房
+     */
+    public static final int DISTRICT_GUAN_DAN_MASTER = 8;
 }
