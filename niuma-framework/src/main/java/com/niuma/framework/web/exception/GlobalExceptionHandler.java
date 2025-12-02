@@ -130,7 +130,7 @@ public class GlobalExceptionHandler
     {
         log.error(e.getMessage(), e);
         String message = e.getAllErrors().get(0).getDefaultMessage();
-        return AjaxResult.error(message);
+        return AjaxResult.error(ResultCodeEnum.BAD_REQUEST.getCode(), message);
     }
 
     /**
@@ -141,7 +141,7 @@ public class GlobalExceptionHandler
     {
         log.error(e.getMessage(), e);
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
-        return AjaxResult.error(message);
+        return AjaxResult.error(ResultCodeEnum.BAD_REQUEST.getCode(), message);
     }
 
     /**

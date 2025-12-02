@@ -46,8 +46,6 @@ public class PlayerController {
         return this.playerService.login(dto);
     }
 
-
-
     /**
      * 登出
      */

@@ -802,6 +802,21 @@ public class GameServiceImpl implements IGameService {
         return address;
     }
 
+    /**
+     * 从Redis中获取服务器的websocket地址
+     * @param serverId 服务器id
+     * @return 服务器websocket地址
+     */
+    private String getServerWSAddress(String serverId) {
+        String redisKey = NiuMaRedisKeys.SERVER_WS_ADDRESS + serverId;
+        String wsAddress = this.redisPrimitive.get(redisKey);
+        if (StringUtils.isEmpty(wsAddress)) {
+            String errMsg = String.format("Can not find the websocket address of server with id: %s", serverId);
+            throw new InternalServerException(NiuMaCodeEnum.SERVER_INACCESSIBLE.getCode(), errMsg);
+        }
+        return wsAddress;
+    }
+
     private void responseEnterVenue(DeferredResult<ResponseEntity<AjaxResult> > result, String playerId, String venueId) {
         // 分配游戏到服务器
         String serverId = assignVenue2Server(venueId);
@@ -817,8 +832,10 @@ public class GameServiceImpl implements IGameService {
         this.redisPrimitive.set(redisKey, venueId);
         // 返回响应HTTP请求
         String address = getServerAddress(serverId);
+        String wsAddress = getServerWSAddress(serverId);
         AjaxResult ajax = AjaxResult.successEx();
         ajax.put("address", address);
+        ajax.put("wsAddress", wsAddress);
         ajax.put("venueId", venueId);
         result.setResult(ResponseEntity.ok(ajax));
     }
